@@ -29,6 +29,6 @@ def Convert_LUT_to_vflpc(csvpath,binpath):
         ba=bytearray(crccode.to_bytes(4, 'little'))
         crcbites=np.asarray(ba).tobytes()
         final=bites+crcbites
-        print(fullpath)
+        #print(fullpath)
         np.asarray(final).tofile(fullpath)
     print('Conversion done')

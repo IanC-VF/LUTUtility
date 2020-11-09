@@ -25,11 +25,6 @@ for csv in glob2.glob('C:/Users/iancl/Documents/CurveCoefficients/CurveCoefficie
     threshold=0.5
     dirname='Rack'+Rack
     curday=datetime.datetime.today()
-    if os.path.isdir(dirname):
-        os.chdir(dirname)
-    else:
-        os.mkdir(dirname)
-        os.chdir(dirname)
     lasernum=0
     for l in range(0,57,3):
         lasernum=lasernum+1
