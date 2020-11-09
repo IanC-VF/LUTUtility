@@ -20,15 +20,15 @@ def Convert_LUT_to_vflpc(csvpath,binpath):
     print('Starting Conversion')
     for csv in glob2.glob(csvpath+'*/*.csv'):
         data=pd.read_csv(csv, dtype = np.uint16, header=None)
-    filebinname=csv[-19:-4]+'.vflpc'
-    racknumber=filebinname[0:3]
-    lasernumber=filebinname[4:6]
-    fullpath=binpath+racknumber+'/'+nameprefix+racknumber+'_P'+lasernumber+'.vflpc'
-    bites=np.asarray(data.values).tobytes()
-    crccode=zlib.crc32(bites)
-    ba=bytearray(crccode.to_bytes(4, 'little'))
-    crcbites=np.asarray(ba).tobytes()
-    final=bites+crcbites
-    #print(final)
-    np.asarray(final).tofile(fullpath)
+        filebinname=csv[-19:-4]+'.vflpc'
+        racknumber=filebinname[0:3]
+        lasernumber=filebinname[4:6]
+        fullpath=binpath+racknumber+'/'+nameprefix+racknumber+'_P'+lasernumber+'.vflpc'
+        bites=np.asarray(data.values).tobytes()
+        crccode=zlib.crc32(bites)
+        ba=bytearray(crccode.to_bytes(4, 'little'))
+        crcbites=np.asarray(ba).tobytes()
+        final=bites+crcbites
+        print(fullpath)
+        np.asarray(final).tofile(fullpath)
     print('Conversion done')
