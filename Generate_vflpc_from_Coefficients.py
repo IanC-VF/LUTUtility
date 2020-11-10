@@ -22,7 +22,8 @@ for csv in glob2.glob('C:/Users/iancl/Documents/CurveCoefficients/CurveCoefficie
     data=data.values
     powerperct=np.linspace(0,1,256)
     Rack=csv[-5]
-    threshold=0.5
+    upperthreshold=0.5
+    lowerthreshold=0.15
     dirname='Rack'+Rack
     curday=datetime.datetime.today()
     lasernum=0
@@ -33,18 +34,24 @@ for csv in glob2.glob('C:/Users/iancl/Documents/CurveCoefficients/CurveCoefficie
         c = data[l+2]
         lcoeff=[a[0],b[0],c[0]]
         adjpower=lcoeff[0]*powerperct*powerperct+lcoeff[1]*powerperct+lcoeff[2]
-        adjpower[0:39]=np.zeros(39)
-    
+        
+        lowercheck=False
+        uppercheck=False
         for i in powerperct:
-            if i >= threshold:
+            if i >= lowerthreshold and lowercheck == False:
+                zeroindex= np.where(powerperct==i)[0][0]
+                lowercheck=True
+            if i >= upperthreshold and uppercheck == False:
                 threshindex=np.where(powerperct==i)[0][0]
                 threshvalue=adjpower[threshindex]
                 #print(threshvalue)
+                uppercheck = True
                 break
         fillsize=np.size(adjpower[threshindex:])
         adjpower[threshindex:]=(np.ones(fillsize)*threshvalue)
+        adjpower[0:zeroindex]=np.zeros(zeroindex)
         scaledpower=np.round(adjpower*65535,0)
-        final=scaledpower.reshape((-1,1))
+        final=scaledpower.reshape((-1,1)).astype(int)
         Lnum=str(lasernum).zfill(2)
         RackFolder='R0'+Rack+'/'
         savename='R0'+Rack+'L'+Lnum+'_'+str(curday.day).zfill(2)+str(curday.month).zfill(2)+str(curday.year)+'.csv'
