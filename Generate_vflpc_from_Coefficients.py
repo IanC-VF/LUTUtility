@@ -17,6 +17,7 @@ name='CurveCoefficients_Rack6.csv'
 csvpath='C:/LaserLUTfiles/LUTcsvFiles/'
 binpath='C:/LaserLUTfiles/LUTbinaryFiles/'
 os.chdir(Coeffpath)
+Calibration_ID=1
 for csv in glob2.glob('C:/LaserLUTfiles/CurveCoefficientData/CurveCoefficients_Rack*.csv'):
     data=pd.read_csv(csv,header = None, skiprows=7, usecols=[3])
     data=data.values
@@ -50,7 +51,7 @@ for csv in glob2.glob('C:/LaserLUTfiles/CurveCoefficientData/CurveCoefficients_R
         savename='R0'+Rack+'L'+Lnum+'_'+str(curday.day).zfill(2)+str(curday.month).zfill(2)+str(curday.year)+'.csv'
         pd.DataFrame(final).to_csv(csvpath+RackFolder+savename, index=False, header=None)
     os.chdir(Coeffpath)
-Convert_LUT_to_vflpc(csvpath,binpath)
+Convert_LUT_to_vflpc(csvpath,binpath,Calibration_ID)
     
     
     

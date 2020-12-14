@@ -15,7 +15,7 @@ import zlib
 nameprefix='VF-LaserPowerLUT_'
 
 
-def Convert_LUT_to_vflpc(csvpath,binpath):
+def Convert_LUT_to_vflpc(csvpath,binpath, ID):
     os.chdir(csvpath)
     print('Starting Conversion')
     for csv in glob2.glob(csvpath+'*/*.csv'):
@@ -23,7 +23,7 @@ def Convert_LUT_to_vflpc(csvpath,binpath):
         filebinname=csv[-19:-4]+'.vflpc'
         racknumber=filebinname[0:3]
         lasernumber=filebinname[4:6]
-        fullpath=binpath+racknumber+'/'+nameprefix+racknumber+'_P'+lasernumber+'.vflpc'
+        fullpath=binpath+racknumber+'/'+nameprefix+racknumber+'_P'+lasernumber+'_ID'+str(ID).zfill(5)+'.vflpc'
         bites=np.asarray(data.values).tobytes()
         crccode=zlib.crc32(bites)
         ba=bytearray(crccode.to_bytes(4, 'little'))
