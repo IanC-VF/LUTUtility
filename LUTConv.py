@@ -19,8 +19,9 @@ def Convert_LUT_to_vflpc(csvpath,binpath, ID):
     os.chdir(csvpath)
     print('Starting Conversion')
     for csv in glob2.glob(csvpath+'*/*.csv'):
+        #print(csvpath+'*/*.csv')
         data=pd.read_csv(csv, dtype = np.uint16, header=None)
-        filebinname=csv[-19:-4]+'.vflpc'
+        filebinname=csv[-27:-4]+'.vflpc'
         racknumber=filebinname[0:3]
         lasernumber=filebinname[4:6]
         fullpath=binpath+racknumber+'/'+nameprefix+racknumber+'_P'+lasernumber+'_ID'+str(ID).zfill(5)+'.vflpc'
