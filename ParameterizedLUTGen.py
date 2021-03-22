@@ -34,8 +34,9 @@ CalIDdf=para['Calibration ID to be generated']# ID of
 CalID=int(CalIDdf[0])
 upperthresholddf=para['Power-modified-limit (in decimal percent of total power)']
 upperthreshold=upperthresholddf[0]
-calledthresholddf=0
-calledthreshold=153
+calledthresholddf=para['Power-called-limit (in decimal percent of total power)']
+calledthreshold=int(np.round(calledthresholddf[0]*255,0))
+print(calledthreshold)
 PulseEnergy=PulseTime*MaxPower
 PowerLevels=PowerLevelsdf.dropna().values
 RacksUsed=np.unique(RackNumbers)
@@ -43,13 +44,14 @@ datalength=len(PowerLevels)
 rows, cols, mats =(21,3,8)
 powerperct=np.linspace(0,1,256)
 lineardata=np.round(powerperct*65535,0)
+lineardata[lineardata>(65535*upperthreshold)]=np.round(65535*upperthreshold,0)
 CFMatrix=np.asarray([[[0 for i in range(cols)] for j in range(rows)]for z in range(mats)], dtype=float)
 calledlimitflag=0
 for i in range(rows):
     for z in range(mats):
         CFMatrix[z][i][1]=1
 
-for laser in glob2.glob('C:/Users/iancl/Documents/RawCalibrationData/955521_*.txt'):
+for laser in glob2.glob(DataDir+'955521_*.txt'):
     #print(laser)
     txtnum=int(laser[-6:-4])
     RackNum=int(RackNumbers[txtnum-1])
@@ -85,6 +87,7 @@ for R in RacksUsed:
         scaledpower[scaledpower>(65535*upperthreshold)]=np.round(65535*upperthreshold,0)
         for y in range(0,255):
             if scaledpower[y]==np.round(65535*upperthreshold,0):
+               #print(f'Laser {i+1} on Rack {int(R)} row call: {y}')
                 calledlimitrow=y
                 break
         
@@ -93,7 +96,7 @@ for R in RacksUsed:
         Lnum=str(i+1).zfill(2)
         RackFolder='R'+str(int(R)).zfill(2)+'/'
         csvsavename='R'+str(int(R)).zfill(2)+'L'+Lnum+'_'+'ID'+str(CalID).zfill(5)+'_'+str(curday.day).zfill(2)+str(curday.month).zfill(2)+str(curday.year)+'.csv'
-        if calledlimitrow>=calledthreshold:
+        if calledlimitrow>calledthreshold:
             pd.DataFrame(final).to_csv(csvpath+RackFolder+csvsavename, index=False, header=None)
         else:
             print(f'Laser {i+1} on Rack {int(R)} failed the Called Limit Check\n')
