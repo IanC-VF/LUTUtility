@@ -11,39 +11,47 @@ import numpy as np
 import glob2
 import datetime
 from LUTConv import Convert_LUT_to_vflpc
+#get date for file names and list file directories and name of info file
 curday=datetime.datetime.today()
 DataDir='C:/Users/iancl/Documents/RawCalibrationData/'
 infoname='CalibrationInfo.csv'
 csvpath='C:/Users/iancl/Documents/LUTcsvFiles/'
 binpath='C:/Users/iancl/Documents/LUTbinfiles/'
 Coeffpath='C:/Users/iancl/Documents/CurveCoefficients/'
-para=pd.read_csv(DataDir+infoname,header=0)
-textnumbers=para.values[:,0]
+#grab parameters from the info file
+para=pd.read_csv(DataDir+infoname,header=0) #grab parameters as a data frame
+textnumbers=para.values[:,0] #three columns needed to match data files to lasers and racks
 RackNumbers=para.values[:,1]
 LaserNumbers=para.values[:,2]
-CFHeader=[ 'a', 'b', 'c']  
+CFHeader=[ 'a', 'b', 'c']  #headers for coefficient file
+#get pulse time and max power
 PowerLevelsdf=para['Power Levels (in decimal percent of total power)']
-#PowerLevels.apply(pd.to_numeric, errors='coerce')
-PulseTimedf=para['Pulse time (secs)']
+PulseTimedf=para['Pulse time on (s)']
 PulseTime=PulseTimedf[0]
 MaxPowerdf=para['Max Power (W)']
 MaxPower=MaxPowerdf[0]
-CalIDdf=para['ID']
+CalIDdf=para['Calibration ID to be generated']# ID of 
 CalID=int(CalIDdf[0])
-upperthresholddf=para['Upper Limit (%)']
+upperthresholddf=para['Power-modified-limit (in decimal percent of total power)']
 upperthreshold=upperthresholddf[0]
+calledthresholddf=para['Power-called-limit (in decimal percent of total power)']
+calledthreshold=int(np.round(calledthresholddf[0]*255,0))
+print(calledthreshold)
 PulseEnergy=PulseTime*MaxPower
 PowerLevels=PowerLevelsdf.dropna().values
 RacksUsed=np.unique(RackNumbers)
 datalength=len(PowerLevels)
 rows, cols, mats =(21,3,8)
 powerperct=np.linspace(0,1,256)
+lineardata=np.round(powerperct*65535,0)
+lineardata[lineardata>(65535*upperthreshold)]=np.round(65535*upperthreshold,0)
 CFMatrix=np.asarray([[[0 for i in range(cols)] for j in range(rows)]for z in range(mats)], dtype=float)
+calledlimitflag=0
 for i in range(rows):
     for z in range(mats):
         CFMatrix[z][i][1]=1
 
-for laser in glob2.glob('C:/Users/iancl/Documents/RawCalibrationData/955521_*.txt'):
+for laser in glob2.glob(DataDir+'955521_*.txt'):
     #print(laser)
     txtnum=int(laser[-6:-4])
     RackNum=int(RackNumbers[txtnum-1])
@@ -71,16 +79,29 @@ for R in RacksUsed:
     R0=pd.DataFrame(Matrix,columns = CFHeader)
     R0.to_csv(finalpath, header = True, index = False)
     for i in range(0,21):
+        calledlimitflag=0
+        calledlimitrow=0
         ce=Matrix[i][:]
         adjpower=ce[0]*powerperct*powerperct+ce[1]*powerperct+ce[2]
         scaledpower=np.round(adjpower*65535,0) #scale all values to 0-65535 scale for VFLCR
         scaledpower[scaledpower>(65535*upperthreshold)]=np.round(65535*upperthreshold,0)
+        for y in range(0,255):
+            if scaledpower[y]==np.round(65535*upperthreshold,0):
+               #print(f'Laser {i+1} on Rack {int(R)} row call: {y}')
+                calledlimitrow=y
+                break
+        
         final=scaledpower.reshape((-1,1)).astype(int)
+        
         Lnum=str(i+1).zfill(2)
         RackFolder='R'+str(int(R)).zfill(2)+'/'
         csvsavename='R'+str(int(R)).zfill(2)+'L'+Lnum+'_'+'ID'+str(CalID).zfill(5)+'_'+str(curday.day).zfill(2)+str(curday.month).zfill(2)+str(curday.year)+'.csv'
-        pd.DataFrame(final).to_csv(csvpath+RackFolder+csvsavename, index=False, header=None)
-
+        if calledlimitrow>calledthreshold:
+            pd.DataFrame(final).to_csv(csvpath+RackFolder+csvsavename, index=False, header=None)
+        else:
+            print(f'Laser {i+1} on Rack {int(R)} failed the Called Limit Check\n')
+            final=lineardata.reshape((-1,1)).astype(int)
+            pd.DataFrame(final).to_csv(csvpath+RackFolder+csvsavename, index=False, header=None)
 Convert_LUT_to_vflpc(csvpath,binpath,CalID)       
         
     
